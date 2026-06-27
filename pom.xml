@@ -1,0 +1,306 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+                             http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════
+       Project coordinates
+       ═══════════════════════════════════════════════════════════════════════ -->
+   <groupId>com.jide</groupId>
+  <artifactId>api-test-automation-reference</artifactId>
+  <version>1.0.0</version>
+  <packaging>jar</packaging>
+
+  <name>JFSoftwareServices — API Test Automation Reference</name>
+  <description>
+    Enterprise API test automation reference framework built with RestAssured and TestNG.
+    Supports JSON and XML payloads, all HTTP methods, parallel execution,
+    JSON Schema and XSD validation, and Allure reporting.
+  </description>
+  <url>https://github.com/JFSoftwareServices/api-test-automation-reference</url>
+
+  <organization>
+    <name>JFSoftwareServices</name>
+    <url>https://github.com/JFSoftwareServices</url>
+  </organization>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════
+       Version properties — single source of truth for all dependency versions
+       ═══════════════════════════════════════════════════════════════════════ -->
+ <properties>
+    <!-- Java -->
+    <maven.compiler.source>21</maven.compiler.source>
+    <maven.compiler.target>21</maven.compiler.target>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+
+    <!-- Test framework -->
+    <testng.version>7.12.0</testng.version>
+
+    <!-- RestAssured ecosystem — all three must share the same version -->
+    <restassured.version>5.5.7</restassured.version>
+    <json-schema-validator.version>5.5.7</json-schema-validator.version>
+
+    <!-- Assertions -->
+    <hamcrest.version>2.2</hamcrest.version>
+
+    <!-- Jackson (JSON + XML serialisation) -->
+    <jackson.version>2.19.1</jackson.version>
+
+    <!-- Logging -->
+    <slf4j.version>2.0.17</slf4j.version>
+
+    <!-- Allure reporting -->
+    <allure.version>2.34.0</allure.version>
+    <allure-maven.version>2.12.0</allure-maven.version>
+
+    <!-- AspectJ — required for Allure @Step AOP interception -->
+    <aspectj.version>1.9.22</aspectj.version>
+
+    <!-- Maven plugins -->
+    <surefire.version>3.5.5</surefire.version>
+    <maven-compiler.version>3.14.0</maven-compiler.version>
+    <maven-enforcer.version>3.5.0</maven-enforcer.version>
+    <jacoco.version>0.8.12</jacoco.version>
+    <checkstyle.version>3.3.1</checkstyle.version>
+    <spotbugs.version>4.8.4.0</spotbugs.version>
+
+    <!-- Default suite — overridable via -Dsuite=testng.xml -->
+    <suite>testng-parallel.xml</suite>
+  </properties>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════
+       Dependencies
+       ═══════════════════════════════════════════════════════════════════════ -->
+  <dependencies>
+
+    <!-- ── TestNG ──────────────────────────────────────────────────────────── -->
+    <dependency>
+      <groupId>org.testng</groupId>
+      <artifactId>testng</artifactId>
+      <version>${testng.version}</version>
+      <scope>test</scope>
+    </dependency>
+
+    <!-- ── RestAssured core ───────────────────────────────────────────────── -->
+    <dependency>
+      <groupId>io.rest-assured</groupId>
+      <artifactId>rest-assured</artifactId>
+      <version>${restassured.version}</version>
+      <scope>test</scope>
+    </dependency>
+
+    <!-- ── JSON Schema validation ─────────────────────────────────────────── -->
+    <dependency>
+      <groupId>io.rest-assured</groupId>
+      <artifactId>json-schema-validator</artifactId>
+      <version>${json-schema-validator.version}</version>
+      <scope>test</scope>
+    </dependency>
+
+    <!-- ── XML path support ───────────────────────────────────────────────── -->
+    <dependency>
+      <groupId>io.rest-assured</groupId>
+      <artifactId>xml-path</artifactId>
+      <version>${restassured.version}</version>
+      <scope>test</scope>
+    </dependency>
+
+    <!-- ── Hamcrest matchers ──────────────────────────────────────────────── -->
+    <dependency>
+      <groupId>org.hamcrest</groupId>
+      <artifactId>hamcrest</artifactId>
+      <version>${hamcrest.version}</version>
+      <scope>test</scope>
+    </dependency>
+
+    <!-- ── Jackson JSON serialisation ────────────────────────────────────── -->
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+      <version>${jackson.version}</version>
+      <scope>test</scope>
+    </dependency>
+
+    <!-- ── Jackson XML serialisation ─────────────────────────────────────── -->
+    <dependency>
+      <groupId>com.fasterxml.jackson.dataformat</groupId>
+      <artifactId>jackson-dataformat-xml</artifactId>
+      <version>${jackson.version}</version>
+      <scope>test</scope>
+    </dependency>
+
+    <!-- ── SLF4J simple logger ────────────────────────────────────────────── -->
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-simple</artifactId>
+      <version>${slf4j.version}</version>
+      <scope>test</scope>
+    </dependency>
+
+    <!-- ── Allure TestNG integration ──────────────────────────────────────── -->
+    <dependency>
+      <groupId>io.qameta.allure</groupId>
+      <artifactId>allure-testng</artifactId>
+      <version>${allure.version}</version>
+      <scope>test</scope>
+    </dependency>
+
+    <!-- ── Allure RestAssured filter — auto-attaches HTTP I/O to report ──── -->
+    <dependency>
+      <groupId>io.qameta.allure</groupId>
+      <artifactId>allure-rest-assured</artifactId>
+      <version>${allure.version}</version>
+      <scope>test</scope>
+    </dependency>
+
+    <!-- ── AspectJ weaver — required for @Step AOP interception ──────────── -->
+    <dependency>
+      <groupId>org.aspectj</groupId>
+      <artifactId>aspectjweaver</artifactId>
+      <version>${aspectj.version}</version>
+      <scope>test</scope>
+    </dependency>
+
+  </dependencies>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════
+       Build configuration
+       ═══════════════════════════════════════════════════════════════════════ -->
+  <build>
+    <plugins>
+
+      <!-- ── Enforcer — minimum Maven and Java versions ─────────────────── -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-enforcer-plugin</artifactId>
+        <version>${maven-enforcer.version}</version>
+        <executions>
+          <execution>
+            <id>enforce-versions</id>
+            <goals><goal>enforce</goal></goals>
+            <configuration>
+              <rules>
+                <requireMavenVersion>
+                  <version>[3.8,)</version>
+                  <message>Maven 3.8+ required</message>
+                </requireMavenVersion>
+                <requireJavaVersion>
+                  <version>[21,)</version>
+                  <message>Java 21+ required</message>
+                </requireJavaVersion>
+              </rules>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <!-- ── Compiler ───────────────────────────────────────────────────── -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>${maven-compiler.version}</version>
+        <configuration>
+          <source>${maven.compiler.source}</source>
+          <target>${maven.compiler.target}</target>
+          <encoding>${project.build.sourceEncoding}</encoding>
+        </configuration>
+      </plugin>
+
+      <!-- ── Surefire — test runner ─────────────────────────────────────── -->
+      <!--
+        Using 3.5.5 (latest stable GA). Surefire 3.6.0-M1 is a milestone that
+        routes all tests through the JUnit Platform — a breaking architectural
+        change that requires TestNG compatibility verification before adoption.
+      -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>${surefire.version}</version>
+        <configuration>
+          <suiteXmlFiles>
+            <suiteXmlFile>${suite}</suiteXmlFile>
+          </suiteXmlFiles>
+          <forkCount>1C</forkCount>
+          <reuseForks>true</reuseForks>
+          <argLine>
+            -javaagent:"${settings.localRepository}/org/aspectj/aspectjweaver/${aspectj.version}/aspectjweaver-${aspectj.version}.jar"
+            -Xmx1024m
+          </argLine>
+          <systemPropertyVariables>
+            <env>${env}</env>
+          </systemPropertyVariables>
+        </configuration>
+      </plugin>
+
+      <!-- ── Allure Maven plugin ────────────────────────────────────────── -->
+      <plugin>
+        <groupId>io.qameta.allure</groupId>
+        <artifactId>allure-maven</artifactId>
+        <version>${allure-maven.version}</version>
+        <configuration>
+          <reportVersion>${allure.version}</reportVersion>
+          <resultsDirectory>${project.build.directory}/allure-results</resultsDirectory>
+          <reportDirectory>${project.build.directory}/allure-report</reportDirectory>
+        </configuration>
+      </plugin>
+
+    </plugins>
+  </build>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════
+       Environment profiles
+       Activate with: mvn test -Pdev | -Pqa | -Pstaging | -Pprod
+       ═══════════════════════════════════════════════════════════════════════ -->
+  <profiles>
+
+    <profile>
+      <id>dev</id>
+      <activation><activeByDefault>false</activeByDefault></activation>
+      <properties>
+        <env>dev</env>
+        <base.url.json>https://jsonplaceholder.typicode.com</base.url.json>
+        <base.url.xml>https://jsonplaceholder.typicode.com</base.url.xml>
+        <suite>testng-parallel.xml</suite>
+      </properties>
+    </profile>
+
+    <profile>
+      <id>qa</id>
+      <activation><activeByDefault>false</activeByDefault></activation>
+      <properties>
+        <env>qa</env>
+        <base.url.json>https://jsonplaceholder.typicode.com</base.url.json>
+        <base.url.xml>https://jsonplaceholder.typicode.com</base.url.xml>
+        <suite>testng-parallel.xml</suite>
+      </properties>
+    </profile>
+
+    <profile>
+      <id>staging</id>
+      <activation><activeByDefault>false</activeByDefault></activation>
+      <properties>
+        <env>staging</env>
+        <base.url.json>https://jsonplaceholder.typicode.com</base.url.json>
+        <base.url.xml>https://jsonplaceholder.typicode.com</base.url.xml>
+        <suite>testng-parallel.xml</suite>
+      </properties>
+    </profile>
+
+    <profile>
+      <id>prod</id>
+      <activation><activeByDefault>false</activeByDefault></activation>
+      <properties>
+        <env>prod</env>
+        <base.url.json>https://jsonplaceholder.typicode.com</base.url.json>
+        <base.url.xml>https://jsonplaceholder.typicode.com</base.url.xml>
+        <!-- Run sequential (safer) against prod -->
+        <suite>testng.xml</suite>
+      </properties>
+    </profile>
+
+  </profiles>
+
+</project>
