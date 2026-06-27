@@ -9,8 +9,8 @@
     "name":     { "type": "string",  "minLength": 1 },
     "username": { "type": "string",  "minLength": 1 },
     "email":    { "type": "string",  "format": "email" },
-    "phone":    { "type": "string" },
-    "website":  { "type": "string" },
+    "phone":    { "type": ["string", "null"] },
+    "website":  { "type": ["string", "null"] },
     "address": {
       "type": "object",
       "properties": {

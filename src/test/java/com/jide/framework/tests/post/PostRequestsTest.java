@@ -5,6 +5,7 @@ import com.jide.framework.client.RequestBuilder;
 import com.jide.framework.models.Post;
 import com.jide.framework.models.User;
 import com.jide.framework.tests.BaseTest;
+import com.jide.framework.validators.XmlSchemaValidator;
 import io.qameta.allure.*;
 import io.restassured.response.Response;
 import org.testng.annotations.Test;
@@ -103,36 +104,26 @@ public class PostRequestsTest extends BaseTest {
     @Test(description = "POST /users with XML payload is accepted")
     @Story("Create user — XML payload")
     @Severity(SeverityLevel.NORMAL)
-    @Description("Demonstrates the XML client path and XSD validation. JSONPlaceholder is JSON-only so the XML body is sent as JSON; XSD validation is demonstrated independently on a known-good XML string.")
+    @Description("Validates XML payload against XSD and sends it using XML request headers.")
     public void createUser_withXmlPayload_returns201() {
+
         String xmlPayload = loadPayload("payloads/xml/create-user.xml");
 
-        // JSONPlaceholder accepts the body regardless of content type and echoes
-        // it back. A real XML API would return XML; here we verify the request
-        // is sent and a success response received, demonstrating the XML client path.
-        Response response = RequestBuilder.withJson()
-            .headers(Map.of("Content-Type", "application/json"))
-            .body(loadPayload("payloads/json/create-user.json"))
+        // JSONPlaceholder does not support real XML responses,
+        // but we can still demonstrate sending XML and validating it.
+
+        // Verify our XML is valid before sending
+        XmlSchemaValidator.validate(
+            xmlPayload,
+            "schemas/xml/user-schema.xsd"
+        );
+
+        Response response = RequestBuilder.withXml()
+            .body(xmlPayload)
             .post("/users");
 
         ApiResponseAssert.assertThat(response)
             .hasStatus(201);
-
-        // Separately demonstrate XSD validation on a known-good XML string
-        // to prove the XML validation path works independently of the API.
-        String validXml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-            + "<user>"
-            + "<name>Jide Framework User</name>"
-            + "<username>jide.framework</username>"
-            + "<email>jide@framework.com</email>"
-            + "</user>";
-
-        ApiResponseAssert.assertThat(response)
-            .matchesXmlSchema("schemas/xml/user-schema.xsd");
-
-        // Direct XSD validation of the XML payload itself
-        com.jide.framework.validators.XmlSchemaValidator
-            .validate(validXml, "schemas/xml/user-schema.xsd");
     }
 
     // -------------------------------------------------------------------------
