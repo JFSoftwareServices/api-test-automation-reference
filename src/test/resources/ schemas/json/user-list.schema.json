@@ -1,0 +1,8 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "UserList",
+  "description": "Schema for the collection response from /users",
+  "type": "array",
+  "items": { "$ref": "user-schema.json" },
+  "minItems": 1
+}
