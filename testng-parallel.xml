@@ -1,8 +1,45 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<!--
+  testng-parallel.xml — Parallel suite (CI default)
+  ───────────────────────────────────────────────────
+  Used for: CI pipeline, full regression, performance coverage.
+  Run with: mvn test                    (default via pom.xml ${suite})
+             mvn test -Dsuite=testng-parallel.xml
 
-<suite name="ParallelSuite" parallel="tests" thread-count="2">
+  parallel="methods" — each @Test method runs independently on its own thread.
+    Chosen over parallel="classes" or parallel="tests" because:
+    - Each @Test method is an independent HTTP call with no shared mutable state.
+    - BaseTest.resetApiClient() in @BeforeMethod guarantees a clean ThreadLocal
+      RequestSpecification before every method — no inter-method dependency.
+    - "methods" mode provides the maximum parallelism for a pure API test suite.
 
-    <!-- Add tests here -->
+  thread-count="8" — starting point for a 4-core host (cores × 2).
+    Tune with: nproc (Linux) or sysctl -n hw.ncpu (macOS), then set to ncpu × 2.
+    In Docker: match the cpus value on the test container.
+
+  data-provider-thread-count="4" — threads for @DataProvider-driven tests.
+    Kept at 4 to avoid overwhelming the API under test with rapid-fire parametric
+    requests while still providing parallelism on data-driven scenarios.
+-->
+<suite name="RestAssuredFramework-Parallel"
+       parallel="methods"
+       thread-count="8"
+       data-provider-thread-count="4"
+       verbose="1">
+
+  <listeners>
+    <listener class-name="com.jide.framework.listeners.TestListener"/>
+  </listeners>
+
+  <test name="AllAPITests">
+    <classes>
+      <class name="com.jide.framework.tests.get.GetRequestsTest"/>
+      <class name="com.jide.framework.tests.post.PostRequestsTest"/>
+      <class name="com.jide.framework.tests.put.PutRequestsTest"/>
+      <class name="com.jide.framework.tests.patch.PatchRequestsTest"/>
+      <class name="com.jide.framework.tests.delete.DeleteRequestsTest"/>
+      <class name="com.jide.framework.tests.headoptions.HeadOptionsTest"/>
+    </classes>
+  </test>
 
 </suite>
