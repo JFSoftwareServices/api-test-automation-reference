@@ -1,0 +1,53 @@
+{
+  "name": "api-test-automation-reference",
+
+  "image": "mcr.microsoft.com/devcontainers/java:21",
+
+  "features": {
+    "ghcr.io/devcontainers/features/git:1": {}
+  },
+
+  "remoteEnv": {
+    "MAVEN_OPTS": "-Xmx2g"
+  },
+
+  "postCreateCommand": "./mvnw -v && java -version && docker --version && echo '✓ Development environment ready'",
+
+  "postStartCommand": "./mvnw -q dependency:resolve || true",
+
+  "forwardPorts": [
+    8080,
+    8888,
+    9090
+  ],
+
+  "portsAttributes": {
+    "8080": {
+      "label": "Jenkins",
+      "onAutoForward": "notify"
+    },
+    "8888": {
+      "label": "Allure Report",
+      "onAutoForward": "openBrowser"
+    }
+  },
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "vscjava.vscode-java-pack",
+        "vscjava.vscode-maven",
+        "ms-azuretools.vscode-docker",
+        "redhat.vscode-xml",
+        "42crunch.vscode-openapi",
+        "eamodio.gitlens"
+      ],
+      "settings": {
+        "java.configuration.updateBuildConfiguration": "automatic",
+        "java.test.defaultConfig": "testng",
+        "editor.formatOnSave": true,
+        "files.trimTrailingWhitespace": true
+      }
+    }
+  }
+}
