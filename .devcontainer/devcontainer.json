@@ -3,34 +3,25 @@
 
   "image": "mcr.microsoft.com/devcontainers/java:21",
 
-  "features": {
-    "ghcr.io/devcontainers/features/git:1": {}
+ "features": {
+    "ghcr.io/devcontainers/features/git:1": {},
+    "ghcr.io/devcontainers/features/docker-in-docker:4": {
+      "moby": false
+    },
+    "ghcr.io/devcontainers/features/java:1": {
+      "version": "21",
+      "installMaven": true,
+      "mavenVersion": "3.9.16"
+    }
   },
 
   "remoteEnv": {
     "MAVEN_OPTS": "-Xmx2g"
   },
 
-  "postCreateCommand": "./mvnw -v && java -version && docker --version && echo '✓ Development environment ready'",
+  "postCreateCommand": "mvn -v && java -version && echo '✓ Development environment ready'",
 
-  "postStartCommand": "./mvnw -q dependency:resolve || true",
-
-  "forwardPorts": [
-    8080,
-    8888,
-    9090
-  ],
-
-  "portsAttributes": {
-    "8080": {
-      "label": "Jenkins",
-      "onAutoForward": "notify"
-    },
-    "8888": {
-      "label": "Allure Report",
-      "onAutoForward": "openBrowser"
-    }
-  },
+  "postStartCommand": "mvn -q dependency:resolve || true",
 
   "customizations": {
     "vscode": {
