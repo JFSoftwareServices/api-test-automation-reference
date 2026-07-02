@@ -5,81 +5,113 @@ import java.io.InputStream;
 import java.util.Properties;
 
 /**
- * ConfigManager is the single source of truth for all framework configuration.
+ * ConfigManager is the central configuration resolver for the test framework.
  *
- * It loads values from config.properties on the classpath, then allows any
- * value to be overridden at runtime via a system property or environment
- * variable. The lookup order for any key is:
+ * It supports layered configuration loading:
  *
- *   1. System property (-Dkey=value passed to Maven or Docker)
- *   2. Environment variable (KEY converted to uppercase with dots as underscores)
- *   3. config.properties value
- *   4. Supplied default
+ *  1. Base configuration (config.properties)
+ *  2. Environment-specific configuration (config-{env}.properties)
+ *  3. Environment variables (Docker / CI runtime)
+ *  4. JVM system properties (-D overrides)
  *
- * This means the same test suite binary can be pointed at different
- * environments without changing any source code:
- *   mvn test -Dbase.url.json=https://staging-api.example.com
+ * Resolution priority (highest → lowest):
+ *  JVM system properties
+ *  Environment variables
+ *  Environment-specific properties file
+ *  Base properties file
  *
- * ConfigManager is a singleton — the properties file is read once at class
- * load time. All access is through static methods so no instance needs to
- * be passed around.
+ * This ensures:
+ *  - deterministic behaviour across CI and local runs
+ *  - no hardcoded environment logic in tests
+ *  - full override flexibility for CI/CD pipelines
  */
-public class ConfigManager {
+public final class ConfigManager {
 
     private static final Properties PROPERTIES = new Properties();
 
+    private static final String BASE_FILE = "config.properties";
+    private static final String ENV_FILE_PREFIX = "config-";
+    private static final String ENV_FILE_SUFFIX = ".properties";
+
     static {
-        try (InputStream is = ConfigManager.class
-                .getClassLoader()
-                .getResourceAsStream("config.properties")) {
-            if (is == null) {
-                throw new IllegalStateException("config.properties not found on classpath");
-            }
-            PROPERTIES.load(is);
-        } catch (IOException e) {
-            throw new IllegalStateException("Failed to load config.properties", e);
-        }
+        loadBaseConfig();
+        loadEnvironmentConfig();
+        applyRuntimeOverrides();
     }
 
     private ConfigManager() {}
 
-    /**
-     * Returns the value for the given key, checking system properties and
-     * environment variables before falling back to config.properties.
-     */
-    public static String get(String key) {
-        // 1. System property
-        String value = System.getProperty(key);
-        if (value != null) return value;
-
-        // 2. Environment variable (BASE_URL_JSON for key base.url.json)
-        String envKey = key.toUpperCase().replace(".", "_");
-        value = System.getenv(envKey);
-        if (value != null) return value;
-
-        // 3. config.properties
-        value = PROPERTIES.getProperty(key);
-        if (value != null) return value;
-
-        throw new IllegalArgumentException("No configuration value found for key: " + key);
-    }
-
-    public static String get(String key, String defaultValue) {
-        try {
-            return get(key);
-        } catch (IllegalArgumentException e) {
-            return defaultValue;
+    private static void loadBaseConfig() {
+        try (InputStream is = getResource(BASE_FILE)) {
+            if (is == null) {
+                throw new IllegalStateException("Missing " + BASE_FILE);
+            }
+            PROPERTIES.load(is);
+        } catch (IOException e) {
+            throw new IllegalStateException("Failed to load " + BASE_FILE, e);
         }
     }
 
+    private static void loadEnvironmentConfig() {
+        String env = getEnvName();
+
+        String fileName = ENV_FILE_PREFIX + env + ENV_FILE_SUFFIX;
+
+        try (InputStream is = getResource(fileName)) {
+            if (is == null) {
+                // optional environment file (not required)
+                return;
+            }
+            PROPERTIES.load(is);
+        } catch (IOException e) {
+            throw new IllegalStateException("Failed to load " + fileName, e);
+        }
+    }
+
+    private static void applyRuntimeOverrides() {
+        // JVM overrides
+        for (String key : PROPERTIES.stringPropertyNames()) {
+            String sys = System.getProperty(key);
+            if (sys != null) {
+                PROPERTIES.setProperty(key, sys);
+            }
+        }
+
+        // Environment variable overrides
+        for (String key : PROPERTIES.stringPropertyNames()) {
+            String envKey = key.toUpperCase().replace(".", "_");
+            String envVal = System.getenv(envKey);
+
+            if (envVal != null) {
+                PROPERTIES.setProperty(key, envVal);
+            }
+        }
+    }
+
+    public static String get(String key) {
+        String value = PROPERTIES.getProperty(key);
+
+        if (value == null || value.isBlank()) {
+            throw new IllegalStateException("Missing required config key: " + key);
+        }
+
+        return value;
+    }
+
+    public static String get(String key, String defaultValue) {
+        String value = PROPERTIES.getProperty(key);
+        return (value == null || value.isBlank()) ? defaultValue : value;
+    }
+
     public static boolean getBoolean(String key, boolean defaultValue) {
-        return Boolean.parseBoolean(get(key, String.valueOf(defaultValue)));
+        String value = get(key, String.valueOf(defaultValue));
+        return value.equalsIgnoreCase("true") || value.equals("1");
     }
 
     public static int getInt(String key, int defaultValue) {
         try {
             return Integer.parseInt(get(key, String.valueOf(defaultValue)));
-        } catch (NumberFormatException e) {
+        } catch (Exception e) {
             return defaultValue;
         }
     }
@@ -90,5 +122,39 @@ public class ConfigManager {
 
     public static String getXmlBaseUrl() {
         return get("base.url.xml");
+    }
+
+    public static boolean isLogRequestsEnabled() {
+        return getBoolean("log.requests", false);
+    }
+
+    public static boolean isLogResponsesEnabled() {
+        return getBoolean("log.responses", false);
+    }
+
+    public static String getSuite() {
+        return get("suite", "testng.xml");
+    }
+
+    private static String getEnvName() {
+        String env = System.getProperty("env");
+
+        if (env != null && !env.isBlank()) {
+            return env.trim().toLowerCase();
+        }
+
+        env = System.getenv("ENV");
+
+        if (env != null && !env.isBlank()) {
+            return env.trim().toLowerCase();
+        }
+
+        return "dev";
+    }
+
+    private static InputStream getResource(String file) {
+        return ConfigManager.class
+                .getClassLoader()
+                .getResourceAsStream(file);
     }
 }
