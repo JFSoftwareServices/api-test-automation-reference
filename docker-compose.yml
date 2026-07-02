@@ -1,0 +1,627 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# Docker Compose Guide
+# ═══════════════════════════════════════════════════════════════════════════════
+#
+# This file defines how the test automation system runs.
+#
+# Docker Compose manages:
+#
+#   - Container creation
+#   - Networks
+#   - Volumes
+#   - Environment configuration
+#   - Service lifecycle
+#
+# Important:
+#
+# Docker Compose runs containers on the SAME Docker host.
+#
+# Docker host = the machine running Docker Engine.
+#
+#
+# ═══════════════════════════════════════════════════════════════════════════════
+# Docker Concepts
+# ═══════════════════════════════════════════════════════════════════════════════
+#
+#
+# 1. Dockerfile
+# ─────────────
+#
+# A Dockerfile is a recipe for building ONE Docker image.
+#
+#
+#       Dockerfile
+#            |
+#            | docker build
+#            v
+#       Docker Image
+#
+#
+# This project Dockerfile:
+#
+#   - Starts from Maven + Java 21
+#   - Downloads dependencies
+#   - Copies automation source
+#   - Creates a reusable test image
+#
+#
+# Dockerfile creates images.
+# It does NOT create running containers.
+#
+#
+#
+# 2. Docker Image
+# ───────────────
+#
+# An image is a reusable template.
+#
+# Think:
+#
+#   Image = blueprint
+#
+#
+# Contains:
+#
+#   - Operating system layer
+#   - Java
+#   - Maven
+#   - Application code
+#   - Dependencies
+#
+#
+# One image can create many containers.
+#
+#
+#             test-runner image
+#
+#                    |
+#          +---------+---------+
+#          |                   |
+#          v                   v
+#
+#     tests-dev             tests-qa
+#     container             container
+#
+#
+#
+# 3. Docker Container
+# ───────────────────
+#
+# A container is a running instance of an image.
+#
+#
+#   Image     = blueprint
+#
+#   Container = running application
+#
+#
+# Containers:
+#
+#   - Have isolated filesystems
+#   - Have network identity
+#   - Can expose ports
+#   - Can mount volumes
+#
+#
+# Removing a container does not remove the image.
+#
+#
+#
+# 4. Docker Compose
+# ─────────────────
+#
+# Compose connects multiple containers into an application.
+#
+#
+# Compose:
+#
+#   - Builds images
+#   - Creates networks
+#   - Creates volumes
+#   - Starts containers
+#   - Manages services
+#
+#
+# Flow:
+#
+#
+#       docker compose up --build
+#
+#              |
+#              v
+#
+#       Read docker-compose.yml
+#
+#              |
+#              +----------------+
+#              |                |
+#              v                v
+#
+#       Build images       Create network
+#                          and volumes
+#
+#              |
+#              v
+#
+#       Create containers
+#
+#              |
+#              v
+#
+#       Start services
+#
+#
+# ═══════════════════════════════════════════════════════════════════════════════
+# Project Architecture
+# ═══════════════════════════════════════════════════════════════════════════════
+#
+#
+# Docker Host / Codespace VM
+#
+# (Machine running Docker Engine)
+#
+#
+# ┌─────────────────────────────────────────────────────────────────────────┐
+# │ Docker Host                                                             │
+# │                                                                         │
+# │  ┌───────────────┐                                                      │
+# │  │ dev container │  Developer workspace                                 │
+# │  │ VS Code       │                                                      │
+# │  │ Java / Maven  │                                                      │
+# │  └───────────────┘                                                      │
+# │                                                                         │
+# │  ┌───────────────┐                                                      │
+# │  │ Jenkins       │  CI/CD                                               │
+# │  │ container     │                                                      │
+# │  └───────────────┘                                                      │
+# │                                                                         │
+# │  ┌───────────────┐                                                      │
+# │  │ tests-dev     │  TestNG development tests                            │
+# │  └───────────────┘                                                      │
+# │                                                                         │
+# │  ┌───────────────┐                                                      │
+# │  │ tests-qa      │  TestNG QA tests                                     │
+# │  └───────────────┘                                                      │
+# │                                                                         │
+# │  ┌───────────────┐                                                      │
+# │  │ tests-staging │  TestNG staging tests                                │
+# │  └───────────────┘                                                      │
+# │                                                                         │
+# │  ┌───────────────┐                                                      │
+# │  │ Allure        │  Test reports                                        │
+# │  └───────────────┘                                                      │
+# │                                                                         │
+# └─────────────────────────────────────────────────────────────────────────┘
+#
+#
+# Maximum containers:
+#
+#   1. dev
+#   2. Jenkins
+#   3. tests-dev
+#   4. tests-qa
+#   5. tests-staging
+#   6. Allure
+#
+#
+# Profiles start only required services.
+#
+#
+# ═══════════════════════════════════════════════════════════════════════════════
+# File Relationship
+# ═══════════════════════════════════════════════════════════════════════════════
+#
+#
+# docker-compose.yml
+#
+#          |
+#          | build:
+#          v
+#
+# Dockerfile
+#
+#          |
+#          | docker build
+#          v
+#
+# Docker Image
+#
+#          |
+#          | docker run
+#          v
+#
+# Docker Container
+#
+#
+# ═══════════════════════════════════════════════════════════════════════════════
+# Common Commands
+# ═══════════════════════════════════════════════════════════════════════════════
+#
+#
+# Build images
+# ────────────
+#
+# Builds all images defined in this compose file without starting containers.
+#
+# Use this when:
+#
+#   • Dockerfile changes
+#   • pom.xml changes
+#   • Source code changes and you want to rebuild first
+#
+# Docker uses its layer cache, so unchanged layers are reused and builds
+# are usually much faster after the first build.
+#
+#   docker compose build
+#
+#
+# Start Development Tests
+# ───────────────────────
+#
+# Builds the image if necessary, then starts the development test container.
+#
+# The --build flag tells Docker to check whether the image needs rebuilding.
+# Docker will only rebuild layers that have changed.
+#
+# Use after modifying:
+#
+#   • src/
+#   • pom.xml
+#   • Dockerfile
+#
+#   docker compose --profile dev up --build
+#
+#
+# Start QA Tests
+# ──────────────
+#
+# Executes the same image using the QA environment configuration.
+#
+#   docker compose --profile qa up --build
+#
+#
+# Start Staging Tests
+# ───────────────────
+#
+# Executes the same image using the staging environment configuration.
+#
+#   docker compose --profile staging up --build
+#
+#
+# Run Without Rebuilding
+# ──────────────────────
+#
+# If the image has already been built and only environment variables or
+# docker-compose.yml configuration have changed, rebuilding is unnecessary.
+#
+#   docker compose --profile dev up
+#
+#
+# Start Report Server
+# ───────────────────
+#
+# Starts only the Allure report service.
+#
+# Open:
+#
+#   http://localhost:8888
+#
+#   docker compose --profile report up
+#
+#
+# Background Mode
+# ───────────────
+#
+# Starts containers in detached mode so the terminal is immediately returned.
+#
+# Useful for long-running services such as Jenkins or Allure.
+#
+#   docker compose --profile dev up -d
+#
+#
+# View Running Containers
+# ───────────────────────
+#
+# Lists containers managed by this compose project.
+#
+#   docker compose ps
+#
+#
+# View Logs
+# ─────────
+#
+# Streams logs from all running services.
+#
+# Add a service name to view only one container:
+#
+#   docker compose logs -f
+#   docker compose logs -f tests-dev
+#
+#
+# Stop Containers
+# ───────────────
+#
+# Stops and removes containers and the compose network.
+#
+# Images and named volumes are preserved.
+#
+#   docker compose down
+#
+#
+# Remove Volumes
+# ──────────────
+#
+# Stops containers and removes named volumes.
+#
+# Use only when you want a completely clean environment.
+#
+#   docker compose down -v
+#
+#
+# WARNING
+# ───────
+#
+# Removing volumes permanently deletes persistent data, including:
+#
+#   • Jenkins configuration and job history
+#   • Maven dependency cache
+#   • Allure results
+#   • Any other data stored in named volumes
+#
+# The next build will need to recreate this data.
+#
+# Rebuild From Scratch
+# ────────────────────
+#
+# Forces Docker to ignore the build cache.
+#
+# Useful if you suspect the cache has become stale or corrupted.
+#
+#   docker compose build --no-cache
+#
+# ═══════════════════════════════════════════════════════════════════════════════
+# Multi-Machine Note
+# ═══════════════════════════════════════════════════════════════════════════════
+#
+#
+# Docker Compose does NOT schedule containers across machines.
+#
+#
+# This:
+#
+#   docker compose up
+#
+# means:
+#
+#   All containers run on ONE Docker host.
+#
+#
+# Multiple Docker hosts require:
+#
+#   - Network configuration
+#   - Firewall rules
+#   - Service discovery
+#   - Security
+#   - Failure handling
+#
+#
+# Example:
+#
+#
+#   Machine A                 Machine B
+#
+#   API container             Database container
+#
+#        |                           |
+#        +------ TCP connection -----+
+#
+#
+# Production platforms such as Kubernetes provide:
+#
+#   - Container scheduling
+#   - Service discovery
+#   - Load balancing
+#   - Scaling
+#   - Recovery
+#
+#
+# ═══════════════════════════════════════════════════════════════════════════════
+
+networks:
+  framework-net:
+    driver: bridge
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Persistent named volumes
+# ═══════════════════════════════════════════════════════════════════════════════
+#
+# These survive container deletion.
+#
+volumes:
+  jenkins-home:
+  allure-results-dev:
+  allure-results-qa:
+  allure-results-staging:
+  allure-results-prod:
+  maven-cache:
+
+
+services:
+
+   # ════════════════════════════════════════════════════════════════════════════
+  # Jenkins CI Server
+  # ════════════════════════════════════════════════════════════════════════════
+  #
+  # CI server for building and running pipelines.
+  #
+  # jenkins:
+  #   build:
+  #     context: ./docker/jenkins
+  #     dockerfile: Dockerfile.jenkins
+  #
+  #   container_name: jf-jenkins
+  #   restart: unless-stopped
+  #
+  #   ports:
+  #     - "8080:8080"
+  #     - "50000:50000"
+  #
+  #   volumes:
+  #     - jenkins-home:/var/jenkins_home
+  #     - /var/run/docker.sock:/var/run/docker.sock
+  #     - maven-cache:/root/.m2
+  #
+  #   environment:
+  #     - JAVA_OPTS=-Xmx1024m -Dhudson.plugins.git.GitSCM.ALLOW_LOCAL_CHECKOUT=true
+  #
+  #   networks:
+  #     - framework-net
+  #
+  #   healthcheck:
+  #     test: ["CMD", "curl", "-f", "http://localhost:8080/login"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 5
+  #     start_period: 60s
+
+
+  # ════════════════════════════════════════════════════════════════════════════
+  # Development Test Runner
+  # ════════════════════════════════════════════════════════════════════════════
+  tests-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: test-runner
+
+    container_name: jf-tests-dev
+    profiles: ["dev"]
+
+    env_file:
+      - envs/dev.env
+
+    volumes:
+      - allure-results-dev:/app/target/allure-results
+      - maven-cache:/root/.m2
+
+    networks:
+      - framework-net
+
+    # command:
+    #   - test
+    #   - -Dsuite=testng-parallel.xml
+    #   - -Pdev
+
+
+  # ════════════════════════════════════════════════════════════════════════════
+  # QA Test Runner
+  # ════════════════════════════════════════════════════════════════════════════
+  tests-qa:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: test-runner
+
+    container_name: jf-tests-qa
+    profiles: ["qa"]
+
+    env_file:
+      - envs/qa.env
+
+    volumes:
+      - allure-results-qa:/app/target/allure-results
+      - maven-cache:/root/.m2
+
+    networks:
+      - framework-net
+
+    # command:
+    #   - test
+    #   - -Dsuite=testng-parallel.xml
+    #   - -Pqa
+
+
+  # ════════════════════════════════════════════════════════════════════════════
+  # Staging Test Runner
+  # ════════════════════════════════════════════════════════════════════════════
+  tests-staging:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: test-runner
+
+    container_name: jf-tests-staging
+    profiles: ["staging"]
+
+    env_file:
+      - envs/staging.env
+
+    volumes:
+      - allure-results-staging:/app/target/allure-results
+      - maven-cache:/root/.m2
+
+    networks:
+      - framework-net
+
+    # command:
+    #   - test
+    #   - -Dsuite=testng-parallel.xml
+    #   - -Pstaging
+
+    # ════════════════════════════════════════════════════════════════════════════
+  # Staging Test Runner
+  # ════════════════════════════════════════════════════════════════════════════
+  tests-prod:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: test-runner
+
+    container_name: jf-tests-prod
+    profiles: ["prod"]
+
+    env_file:
+      - envs/prod.env
+
+    volumes:
+      - allure-results-prod:/app/target/allure-results
+      - maven-cache:/root/.m2
+
+    networks:
+      - framework-net
+
+    # command:
+    #   - test
+    #   - -Dsuite=testng-parallel.xml
+    #   - -Pprod
+
+  # ════════════════════════════════════════════════════════════════════════════
+  # Allure Report Server
+  # ════════════════════════════════════════════════════════════════════════════
+  #
+  # Generates HTML reports from test results.
+  #
+  allure:
+    image: frankescobar/allure-docker-service:latest
+
+    container_name: jf-allure
+    restart: unless-stopped
+
+    ports:
+      - "8888:5050"
+
+    volumes:
+      - allure-results-dev:/app/allure-results
+      - allure-results-qa:/app/allure-results
+      - allure-results-staging:/app/allure-results
+
+    environment:
+      - CHECK_RESULTS_EVERY_SECONDS=3
+      - KEEP_HISTORY=20
+
+    networks:
+      - framework-net
+
+    profiles:
+      - report
