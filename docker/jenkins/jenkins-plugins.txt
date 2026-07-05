@@ -1,0 +1,16 @@
+git:latest
+workflow-aggregator:latest
+pipeline-stage-view:latest
+credentials-binding:latest
+ssh-agent:latest
+ws-cleanup:latest
+junit:latest
+
+docker-workflow:latest
+
+testng-plugin:latest
+allure-jenkins-plugin:latest
+htmlpublisher:latest
+
+timestamper:latest
+configuration-as-code:latest

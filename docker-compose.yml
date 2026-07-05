@@ -431,60 +431,45 @@ networks:
   framework-net:
     driver: bridge
 
-
-# ═══════════════════════════════════════════════════════════════════════════════
-# Persistent named volumes
-# ═══════════════════════════════════════════════════════════════════════════════
-#
-# These survive container deletion.
-#
 volumes:
   jenkins-home:
-  allure-results-dev:
-  allure-results-qa:
-  allure-results-staging:
-  allure-results-prod:
+  allure-results:
   maven-cache:
-
 
 services:
 
-   # ════════════════════════════════════════════════════════════════════════════
+  # ════════════════════════════════════════════════════════════════════════════
   # Jenkins CI Server
   # ════════════════════════════════════════════════════════════════════════════
-  #
-  # CI server for building and running pipelines.
-  #
-  # jenkins:
-  #   build:
-  #     context: ./docker/jenkins
-  #     dockerfile: Dockerfile.jenkins
-  #
-  #   container_name: jf-jenkins
-  #   restart: unless-stopped
-  #
-  #   ports:
-  #     - "8080:8080"
-  #     - "50000:50000"
-  #
-  #   volumes:
-  #     - jenkins-home:/var/jenkins_home
-  #     - /var/run/docker.sock:/var/run/docker.sock
-  #     - maven-cache:/root/.m2
-  #
-  #   environment:
-  #     - JAVA_OPTS=-Xmx1024m -Dhudson.plugins.git.GitSCM.ALLOW_LOCAL_CHECKOUT=true
-  #
-  #   networks:
-  #     - framework-net
-  #
-  #   healthcheck:
-  #     test: ["CMD", "curl", "-f", "http://localhost:8080/login"]
-  #     interval: 30s
-  #     timeout: 10s
-  #     retries: 5
-  #     start_period: 60s
+  jenkins:
+    user: root
+    build:
+      context: ./docker/jenkins
+      dockerfile: Dockerfile.jenkins
 
+    restart: unless-stopped
+
+    ports:
+      - "8080:8080"
+      - "50000:50000"
+
+    volumes:
+      - jenkins-home:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+      - maven-cache:/root/.m2
+
+    environment:
+      - JAVA_OPTS=-Xmx1024m -Dhudson.plugins.git.GitSCM.ALLOW_LOCAL_CHECKOUT=true
+
+    networks:
+      - framework-net
+
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/login"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
 
   # ════════════════════════════════════════════════════════════════════════════
   # Development Test Runner
@@ -495,25 +480,42 @@ services:
       dockerfile: Dockerfile
       target: test-runner
 
-    container_name: jf-tests-dev
     profiles: ["dev"]
 
     env_file:
       - envs/dev.env
 
     volumes:
-      - allure-results-dev:/app/target/allure-results
+      - allure-results:/app/target/allure-results
       - maven-cache:/root/.m2
 
     networks:
       - framework-net
 
-    # command:
-    #   - test
-    #   - -Dsuite=testng-parallel.xml
-    #   - -Pdev
+    init: true
+    stdin_open: false
+    tty: false
 
+    command:
+      - sh
+      - -c
+      - |
+        set -e
 
+        echo "=================================="
+        echo "🚀 Maven Test Execution"
+        echo "=================================="
+        echo "SUITE          = $SUITE"
+        echo "ENV            = $ENV"
+        echo "BASE_URL_JSON  = $BASE_URL_JSON"
+        echo "BASE_URL_XML   = $BASE_URL_XML"
+        echo "=================================="
+
+        mvn -B test \
+          -DsuiteXmlFile="$SUITE" \
+          -Dbase.url.json="$BASE_URL_JSON" \
+          -Dbase.url.xml="$BASE_URL_XML" \
+          -Denv="$ENV"
   # ════════════════════════════════════════════════════════════════════════════
   # QA Test Runner
   # ════════════════════════════════════════════════════════════════════════════
@@ -523,27 +525,34 @@ services:
       dockerfile: Dockerfile
       target: test-runner
 
-    container_name: jf-tests-qa
     profiles: ["qa"]
 
     env_file:
       - envs/qa.env
 
     volumes:
-      - allure-results-qa:/app/target/allure-results
+      - allure-results:/app/target/allure-results
       - maven-cache:/root/.m2
 
     networks:
       - framework-net
 
-    # command:
-    #   - test
-    #   - -Dsuite=testng-parallel.xml
-    #   - -Pqa
+    init: true
+    stdin_open: false
+    tty: false
 
+    command:
+      - sh
+      - -c
+      - >
+        mvn -B test
+        -DsuiteXmlFile=$SUITE
+        -Dbase.url.json=$BASE_URL_JSON
+        -Dbase.url.xml=$BASE_URL_XML
+        -Denv=$ENV
 
   # ════════════════════════════════════════════════════════════════════════════
-  # Staging Test Runner
+  # STAGING Test Runner
   # ════════════════════════════════════════════════════════════════════════════
   tests-staging:
     build:
@@ -551,26 +560,34 @@ services:
       dockerfile: Dockerfile
       target: test-runner
 
-    container_name: jf-tests-staging
     profiles: ["staging"]
 
     env_file:
       - envs/staging.env
 
     volumes:
-      - allure-results-staging:/app/target/allure-results
+      - allure-results:/app/target/allure-results
       - maven-cache:/root/.m2
 
     networks:
       - framework-net
 
-    # command:
-    #   - test
-    #   - -Dsuite=testng-parallel.xml
-    #   - -Pstaging
+    init: true
+    stdin_open: false
+    tty: false
 
-    # ════════════════════════════════════════════════════════════════════════════
-  # Staging Test Runner
+    command:
+      - sh
+      - -c
+      - >
+        mvn -B test
+        -DsuiteXmlFile=$SUITE
+        -Dbase.url.json=$BASE_URL_JSON
+        -Dbase.url.xml=$BASE_URL_XML
+        -Denv=$ENV
+
+  # ════════════════════════════════════════════════════════════════════════════
+  # PROD Test Runner
   # ════════════════════════════════════════════════════════════════════════════
   tests-prod:
     build:
@@ -578,43 +595,45 @@ services:
       dockerfile: Dockerfile
       target: test-runner
 
-    container_name: jf-tests-prod
     profiles: ["prod"]
 
     env_file:
       - envs/prod.env
 
     volumes:
-      - allure-results-prod:/app/target/allure-results
+      - allure-results:/app/target/allure-results
       - maven-cache:/root/.m2
 
     networks:
       - framework-net
 
-    # command:
-    #   - test
-    #   - -Dsuite=testng-parallel.xml
-    #   - -Pprod
+    init: true
+    stdin_open: false
+    tty: false
+
+    command:
+      - sh
+      - -c
+      - >
+        mvn -B test
+        -DsuiteXmlFile=$SUITE
+        -Dbase.url.json=$BASE_URL_JSON
+        -Dbase.url.xml=$BASE_URL_XML
+        -Denv=$ENV
 
   # ════════════════════════════════════════════════════════════════════════════
   # Allure Report Server
   # ════════════════════════════════════════════════════════════════════════════
-  #
-  # Generates HTML reports from test results.
-  #
   allure:
     image: frankescobar/allure-docker-service:latest
 
-    container_name: jf-allure
     restart: unless-stopped
 
     ports:
       - "8888:5050"
 
     volumes:
-      - allure-results-dev:/app/allure-results
-      - allure-results-qa:/app/allure-results
-      - allure-results-staging:/app/allure-results
+      - allure-results:/app/allure-results
 
     environment:
       - CHECK_RESULTS_EVERY_SECONDS=3
@@ -622,6 +641,3 @@ services:
 
     networks:
       - framework-net
-
-    profiles:
-      - report

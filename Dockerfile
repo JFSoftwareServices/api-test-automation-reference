@@ -107,20 +107,3 @@ COPY --from=deps /root/.m2 /root/.m2
 COPY pom.xml .
 COPY src/ src/
 COPY testng.xml testng-parallel.xml ./
-
-# ───────────────────────────────────────────────────────────────────────────────
-# Runtime configuration
-# ───────────────────────────────────────────────────────────────────────────────
-
-ENV ENV=dev \
-    SUITE=testng-parallel.xml \
-    BASE_URL_JSON=https://jsonplaceholder.typicode.com \
-    BASE_URL_XML=https://jsonplaceholder.typicode.com
-
-ENTRYPOINT ["sh", "-c"]
-
-CMD ["mvn test \
-      -Dsuite=$SUITE \
-      -Dbase.url.json=$BASE_URL_JSON \
-      -Dbase.url.xml=$BASE_URL_XML \
-      -Denv=$ENV"]
