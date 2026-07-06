@@ -482,8 +482,15 @@ services:
 
     profiles: ["dev"]
 
-    env_file:
-      - envs/dev.env
+    environment:
+      ENV: ${ENV}
+      SUITE: ${SUITE}
+      BASE_URL_JSON: ${BASE_URL_JSON}
+      BASE_URL_XML: ${BASE_URL_XML}
+      LOG_REQUESTS: ${LOG_REQUESTS}
+      LOG_RESPONSES: ${LOG_RESPONSES}
+      CONNECTION_TIMEOUT: ${CONNECTION_TIMEOUT}
+      READ_TIMEOUT: ${READ_TIMEOUT}
 
     volumes:
       - allure-results:/app/target/allure-results
@@ -527,8 +534,15 @@ services:
 
     profiles: ["qa"]
 
-    env_file:
-      - envs/qa.env
+    environment:
+      ENV: ${ENV}
+      SUITE: ${SUITE}
+      BASE_URL_JSON: ${BASE_URL_JSON}
+      BASE_URL_XML: ${BASE_URL_XML}
+      LOG_REQUESTS: ${LOG_REQUESTS}
+      LOG_RESPONSES: ${LOG_RESPONSES}
+      CONNECTION_TIMEOUT: ${CONNECTION_TIMEOUT}
+      READ_TIMEOUT: ${READ_TIMEOUT}
 
     volumes:
       - allure-results:/app/target/allure-results
@@ -544,12 +558,23 @@ services:
     command:
       - sh
       - -c
-      - >
-        mvn -B test
-        -DsuiteXmlFile=$SUITE
-        -Dbase.url.json=$BASE_URL_JSON
-        -Dbase.url.xml=$BASE_URL_XML
-        -Denv=$ENV
+      - |
+        set -e
+
+        echo "=================================="
+        echo "🚀 Maven Test Execution"
+        echo "=================================="
+        echo "SUITE          = $SUITE"
+        echo "ENV            = $ENV"
+        echo "BASE_URL_JSON  = $BASE_URL_JSON"
+        echo "BASE_URL_XML   = $BASE_URL_XML"
+        echo "=================================="
+
+        mvn -B test \
+          -DsuiteXmlFile="$SUITE" \
+          -Dbase.url.json="$BASE_URL_JSON" \
+          -Dbase.url.xml="$BASE_URL_XML" \
+          -Denv="$ENV"
 
   # ════════════════════════════════════════════════════════════════════════════
   # STAGING Test Runner
@@ -562,8 +587,15 @@ services:
 
     profiles: ["staging"]
 
-    env_file:
-      - envs/staging.env
+    environment:
+      ENV: ${ENV}
+      SUITE: ${SUITE}
+      BASE_URL_JSON: ${BASE_URL_JSON}
+      BASE_URL_XML: ${BASE_URL_XML}
+      LOG_REQUESTS: ${LOG_REQUESTS}
+      LOG_RESPONSES: ${LOG_RESPONSES}
+      CONNECTION_TIMEOUT: ${CONNECTION_TIMEOUT}
+      READ_TIMEOUT: ${READ_TIMEOUT}
 
     volumes:
       - allure-results:/app/target/allure-results
@@ -579,12 +611,23 @@ services:
     command:
       - sh
       - -c
-      - >
-        mvn -B test
-        -DsuiteXmlFile=$SUITE
-        -Dbase.url.json=$BASE_URL_JSON
-        -Dbase.url.xml=$BASE_URL_XML
-        -Denv=$ENV
+      - |
+        set -e
+
+        echo "=================================="
+        echo "🚀 Maven Test Execution"
+        echo "=================================="
+        echo "SUITE          = $SUITE"
+        echo "ENV            = $ENV"
+        echo "BASE_URL_JSON  = $BASE_URL_JSON"
+        echo "BASE_URL_XML   = $BASE_URL_XML"
+        echo "=================================="
+
+        mvn -B test \
+          -DsuiteXmlFile="$SUITE" \
+          -Dbase.url.json="$BASE_URL_JSON" \
+          -Dbase.url.xml="$BASE_URL_XML" \
+          -Denv="$ENV"
 
   # ════════════════════════════════════════════════════════════════════════════
   # PROD Test Runner
@@ -597,8 +640,15 @@ services:
 
     profiles: ["prod"]
 
-    env_file:
-      - envs/prod.env
+    environment:
+      ENV: ${ENV}
+      SUITE: ${SUITE}
+      BASE_URL_JSON: ${BASE_URL_JSON}
+      BASE_URL_XML: ${BASE_URL_XML}
+      LOG_REQUESTS: ${LOG_REQUESTS}
+      LOG_RESPONSES: ${LOG_RESPONSES}
+      CONNECTION_TIMEOUT: ${CONNECTION_TIMEOUT}
+      READ_TIMEOUT: ${READ_TIMEOUT}
 
     volumes:
       - allure-results:/app/target/allure-results
@@ -614,12 +664,23 @@ services:
     command:
       - sh
       - -c
-      - >
-        mvn -B test
-        -DsuiteXmlFile=$SUITE
-        -Dbase.url.json=$BASE_URL_JSON
-        -Dbase.url.xml=$BASE_URL_XML
-        -Denv=$ENV
+      - |
+        set -e
+
+        echo "=================================="
+        echo "🚀 Maven Test Execution"
+        echo "=================================="
+        echo "SUITE          = $SUITE"
+        echo "ENV            = $ENV"
+        echo "BASE_URL_JSON  = $BASE_URL_JSON"
+        echo "BASE_URL_XML   = $BASE_URL_XML"
+        echo "=================================="
+
+        mvn -B test \
+          -DsuiteXmlFile="$SUITE" \
+          -Dbase.url.json="$BASE_URL_JSON" \
+          -Dbase.url.xml="$BASE_URL_XML" \
+          -Denv="$ENV"
 
   # ════════════════════════════════════════════════════════════════════════════
   # Allure Report Server

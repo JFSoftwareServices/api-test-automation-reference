@@ -1,7 +1,6 @@
 package com.jide.framework.tests;
 
 import com.jide.framework.client.ApiClient;
-import com.jide.framework.config.ConfigManager;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.BeforeSuite;
 
@@ -44,8 +43,8 @@ public class BaseTest {
     public void suiteSetup() {
         System.out.println("=".repeat(60));
         System.out.println("Test Suite Starting");
-        System.out.println("JSON Base URL : " + ConfigManager.getJsonBaseUrl());
-        System.out.println("XML  Base URL : " + ConfigManager.getXmlBaseUrl());
+        System.out.println("JSON Base URL : " + System.getenv("BASE_URL_JSON"));
+        System.out.println("XML  Base URL : " + System.getenv("BASE_URL_XML"));
         System.out.println("=".repeat(60));
     }
 

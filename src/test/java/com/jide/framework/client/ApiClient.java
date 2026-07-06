@@ -1,6 +1,5 @@
 package com.jide.framework.client;
 
-import com.jide.framework.config.ConfigManager;
 import io.qameta.allure.restassured.AllureRestAssured;
 import io.restassured.builder.RequestSpecBuilder;
 import io.restassured.config.HttpClientConfig;
@@ -107,7 +106,7 @@ public class ApiClient {
 
     private static RequestSpecification buildJsonSpec() {
         RequestSpecBuilder builder = new RequestSpecBuilder()
-            .setBaseUri(ConfigManager.getJsonBaseUrl())
+            .setBaseUri(System.getenv("BASE_URL_JSON"))
             .setContentType(ContentType.JSON)
             .setAccept(ContentType.JSON)
             .setConfig(buildRestAssuredConfig())
@@ -117,10 +116,10 @@ public class ApiClient {
             // means every request made through this spec is captured.
             .addFilter(new AllureRestAssured());
 
-        if (ConfigManager.getBoolean("log.requests", true)) {
+        if ("true".equalsIgnoreCase(System.getenv("LOG_REQUESTS"))) {
             builder.addFilter(new RequestLoggingFilter());
         }
-        if (ConfigManager.getBoolean("log.responses", true)) {
+        if ("true".equalsIgnoreCase(System.getenv("LOG_REPONSES"))) {
             builder.addFilter(new ResponseLoggingFilter());
         }
 
@@ -129,16 +128,16 @@ public class ApiClient {
 
     private static RequestSpecification buildXmlSpec() {
         RequestSpecBuilder builder = new RequestSpecBuilder()
-            .setBaseUri(ConfigManager.getXmlBaseUrl())
+            .setBaseUri(System.getenv("BASE_URL_XML"))
             .setContentType(ContentType.XML)
             .setAccept(ContentType.XML)
             .setConfig(buildRestAssuredConfig())
             .addFilter(new AllureRestAssured());
 
-        if (ConfigManager.getBoolean("log.requests", true)) {
+        if ("true".equalsIgnoreCase(System.getenv("LOG_REQUESTS"))) {
             builder.addFilter(new RequestLoggingFilter());
         }
-        if (ConfigManager.getBoolean("log.responses", true)) {
+        if ("true".equalsIgnoreCase(System.getenv("LOG_RESPONSES"))) {
             builder.addFilter(new ResponseLoggingFilter());
         }
 
@@ -146,8 +145,8 @@ public class ApiClient {
     }
 
     private static RestAssuredConfig buildRestAssuredConfig() {
-        int connectTimeout = ConfigManager.getInt("connection.timeout", 5000);
-        int readTimeout    = ConfigManager.getInt("read.timeout", 10000);
+        int connectTimeout = Integer.valueOf(System.getenv("CONNECTION_TIMEOUT"));
+        int readTimeout    = Integer.valueOf(System.getenv("READ_TIMEOUT"));
 
         return RestAssuredConfig.config()
             .httpClient(HttpClientConfig.httpClientConfig()

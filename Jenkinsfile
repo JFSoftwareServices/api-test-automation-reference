@@ -153,17 +153,17 @@ pipeline {
     }
 
     parameters {
-        choice(
-            name: 'SUITE',
-            choices: ['testng.xml', 'testng-parallel.xml'],
-            description: 'TestNG suite executed inside containers'
-        )
+      choice(
+        name: 'SUITE',
+        choices: ['testng.xml', 'testng-parallel.xml'],
+        description: 'TestNG suite executed inside containers'
+      )
 
-        booleanParam(
-            name: 'SKIP_PROD',
-            defaultValue: false,
-            description: 'Skip production stage'
-        )
+      booleanParam(
+        name: 'SKIP_PROD',
+        defaultValue: false,
+        description: 'Skip production stage'
+      )
     }
 
     options {
@@ -195,6 +195,17 @@ pipeline {
         // DEV (always runs)
         // ─────────────────────────────────────────────
         stage('DEV') {
+
+            environment{
+                ENV = 'dev'
+                BASE_URL_JSON = 'https://jsonplaceholder.typicode.com'
+                BASE_URL_XML = 'https://jsonplaceholder.typicode.com'
+                LOG_REQUESTS = 'true'
+                LOG_RESPONSES = 'true'
+                CONNECTION_TIMEOUT = '5000'
+                READ_TIMEOUT = '10000'
+            }
+
             steps {
                 script {
                     runEnv('dev')
@@ -206,6 +217,15 @@ pipeline {
         // QA (main only)
         // ─────────────────────────────────────────────
         stage('QA') {
+            environment{
+                ENV = 'qa'
+                BASE_URL_JSON = 'https://jsonplaceholder.typicode.com'
+                BASE_URL_XML = 'https://jsonplaceholder.typicode.com'
+                LOG_REQUESTS = 'true'
+                LOG_RESPONSES = 'true'
+                CONNECTION_TIMEOUT = '5000'
+                READ_TIMEOUT = '10000'
+            }
             when {
                 expression { env.BRANCH_NAME == 'main' }
             }
@@ -220,6 +240,16 @@ pipeline {
         // STAGING (main only)
         // ─────────────────────────────────────────────
         stage('STAGING') {
+
+            environment{
+                ENV = 'staging'
+                BASE_URL_JSON = 'https://jsonplaceholder.typicode.com'
+                BASE_URL_XML = 'https://jsonplaceholder.typicode.com'
+                LOG_REQUESTS = 'true'
+                LOG_RESPONSES = 'true'
+                CONNECTION_TIMEOUT = '5000'
+                READ_TIMEOUT = '10000'
+            }
             when {
                 expression { env.BRANCH_NAME == 'main' }
             }
@@ -234,15 +264,35 @@ pipeline {
         // PRODUCTION GATE (main only)
         // ─────────────────────────────────────────────
         stage('Production Approval') {
+            environment{
+                ENV = 'prod'
+                BASE_URL_JSON = 'https://jsonplaceholder.typicode.com'
+                BASE_URL_XML = 'https://jsonplaceholder.typicode.com'
+                LOG_REQUESTS = 'false'
+                LOG_RESPONSES = 'false'
+                CONNECTION_TIMEOUT = '5000'
+                READ_TIMEOUT = '10000'
+            }
             when {
                 expression { env.BRANCH_NAME == 'main' && !params.SKIP_PROD }
             }
             steps {
+                timeout(time: 24, unit: 'HOURS') {
                 input message: 'Approve production deployment?'
+                }
             }
         }
 
         stage('PROD') {
+            environment{
+                ENV = 'prod'
+                BASE_URL_JSON = 'https://jsonplaceholder.typicode.com'
+                BASE_URL_XML = 'https://jsonplaceholder.typicode.com'
+                LOG_REQUESTS = 'false'
+                LOG_RESPONSES = 'false'
+                CONNECTION_TIMEOUT = '5000'
+                READ_TIMEOUT = '10000'
+            }
             when {
                 expression { env.BRANCH_NAME == 'main' && !params.SKIP_PROD }
             }
@@ -285,12 +335,28 @@ def runEnv(String env) {
     echo "Running tests for environment: ${env}"
     echo "Using suite: ${params.SUITE}"
 
+    sh '''
+        echo "=================================="
+        echo "Environment Validation"
+        echo "=================================="
+
+        test -n "$ENV" || (echo "ERROR: ENV is empty" && exit 1)
+        test -n "$BASE_URL_JSON" || (echo "ERROR: BASE_URL_JSON is empty" && exit 1)
+        test -n "$BASE_URL_XML" || (echo "ERROR: BASE_URL_XML is empty" && exit 1)
+
+        echo "ENV              = $ENV"
+        echo "BASE_URL_JSON    = $BASE_URL_JSON"
+        echo "BASE_URL_XML     = $BASE_URL_XML"
+
+        echo "Environment variables validated"
+        echo "=================================="
+    '''
+
     sh """
         SUITE=${params.SUITE} \
         ${COMPOSE} \
             --profile ${env} \
             up \
-            --build \
             --abort-on-container-exit \
             --exit-code-from tests-${env}
     """
