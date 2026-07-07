@@ -433,7 +433,6 @@ networks:
 
 volumes:
   jenkins-home:
-  allure-results:
   maven-cache:
 
 services:
@@ -493,7 +492,7 @@ services:
       READ_TIMEOUT: ${READ_TIMEOUT}
 
     volumes:
-      - allure-results:/app/target/allure-results
+      - .:/app
       - maven-cache:/root/.m2
 
     networks:
@@ -545,7 +544,7 @@ services:
       READ_TIMEOUT: ${READ_TIMEOUT}
 
     volumes:
-      - allure-results:/app/target/allure-results
+      - .:/app
       - maven-cache:/root/.m2
 
     networks:
@@ -598,7 +597,7 @@ services:
       READ_TIMEOUT: ${READ_TIMEOUT}
 
     volumes:
-      - allure-results:/app/target/allure-results
+      - .:/app
       - maven-cache:/root/.m2
 
     networks:
@@ -651,7 +650,7 @@ services:
       READ_TIMEOUT: ${READ_TIMEOUT}
 
     volumes:
-      - allure-results:/app/target/allure-results
+      - .:/app
       - maven-cache:/root/.m2
 
     networks:
@@ -681,24 +680,3 @@ services:
           -Dbase.url.json="$BASE_URL_JSON" \
           -Dbase.url.xml="$BASE_URL_XML" \
           -Denv="$ENV"
-
-  # ════════════════════════════════════════════════════════════════════════════
-  # Allure Report Server
-  # ════════════════════════════════════════════════════════════════════════════
-  allure:
-    image: frankescobar/allure-docker-service:latest
-
-    restart: unless-stopped
-
-    ports:
-      - "8888:5050"
-
-    volumes:
-      - allure-results:/app/allure-results
-
-    environment:
-      - CHECK_RESULTS_EVERY_SECONDS=3
-      - KEEP_HISTORY=20
-
-    networks:
-      - framework-net
