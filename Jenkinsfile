@@ -185,9 +185,9 @@ pipeline {
             }
         }
 
-        stage('Build Images') {
+        stage('Build Test Images') {
             steps {
-                sh "${COMPOSE} build"
+                sh "${COMPOSE} build tests-dev tests-qa tests-staging tests-prod"
             }
         }
 
@@ -316,11 +316,13 @@ pipeline {
     }
 
     // ─────────────────────────────────────────────
-    // CLEANUP (always runs)
+    // CLEANUP TEST CONTAINERS(always runs)
     // ─────────────────────────────────────────────
     post {
         always {
-            sh "${COMPOSE} down -v --remove-orphans || true"
+            sh """
+                ${COMPOSE} rm -fsv tests-dev tests-qa tests-staging tests-prod || true
+            """
         }
     }
 }
