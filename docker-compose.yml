@@ -427,6 +427,8 @@
 #
 # ═══════════════════════════════════════════════════════════════════════════════
 
+name: api-test-promotion-pipeline
+
 networks:
   framework-net:
     driver: bridge
