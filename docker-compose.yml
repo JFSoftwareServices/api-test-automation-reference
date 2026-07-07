@@ -494,7 +494,6 @@ services:
       READ_TIMEOUT: ${READ_TIMEOUT}
 
     volumes:
-      - .:/app
       - maven-cache:/root/.m2
 
     networks:
@@ -546,7 +545,6 @@ services:
       READ_TIMEOUT: ${READ_TIMEOUT}
 
     volumes:
-      - .:/app
       - maven-cache:/root/.m2
 
     networks:
@@ -599,7 +597,6 @@ services:
       READ_TIMEOUT: ${READ_TIMEOUT}
 
     volumes:
-      - .:/app
       - maven-cache:/root/.m2
 
     networks:
@@ -652,7 +649,6 @@ services:
       READ_TIMEOUT: ${READ_TIMEOUT}
 
     volumes:
-      - .:/app
       - maven-cache:/root/.m2
 
     networks:
