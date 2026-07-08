@@ -200,8 +200,8 @@ pipeline {
                 ENV = 'dev'
                 BASE_URL_JSON = 'https://jsonplaceholder.typicode.com'
                 BASE_URL_XML = 'https://jsonplaceholder.typicode.com'
-                LOG_REQUESTS = 'true'
-                LOG_RESPONSES = 'true'
+                LOG_REQUESTS = 'false'
+                LOG_RESPONSES = 'false'
                 CONNECTION_TIMEOUT = '5000'
                 READ_TIMEOUT = '10000'
             }
@@ -221,8 +221,8 @@ pipeline {
                 ENV = 'qa'
                 BASE_URL_JSON = 'https://jsonplaceholder.typicode.com'
                 BASE_URL_XML = 'https://jsonplaceholder.typicode.com'
-                LOG_REQUESTS = 'true'
-                LOG_RESPONSES = 'true'
+                LOG_REQUESTS = 'false'
+                LOG_RESPONSES = 'false'
                 CONNECTION_TIMEOUT = '5000'
                 READ_TIMEOUT = '10000'
             }
@@ -245,8 +245,8 @@ pipeline {
                 ENV = 'staging'
                 BASE_URL_JSON = 'https://jsonplaceholder.typicode.com'
                 BASE_URL_XML = 'https://jsonplaceholder.typicode.com'
-                LOG_REQUESTS = 'true'
-                LOG_RESPONSES = 'true'
+                LOG_REQUESTS = 'false'
+                LOG_RESPONSES = 'false'
                 CONNECTION_TIMEOUT = '5000'
                 READ_TIMEOUT = '10000'
             }
