@@ -164,6 +164,18 @@ pipeline {
         defaultValue: false,
         description: 'Deploy to production after approval'
       )
+
+      booleanParam(
+        name: 'LOG_REQUESTS',
+        defaultValue: false,
+        description: 'Log HTTP requests during test execution'
+      )
+
+      booleanParam(
+        name: 'LOG_RESPONSES',
+        defaultValue: false,
+        description: 'Log HTTP responses during test execution'
+      )
     }
 
     options {
@@ -173,7 +185,11 @@ pipeline {
     }
 
     environment {
-        COMPOSE = "docker compose"
+        COMPOSE = 'docker compose'
+        BASE_URL_JSON = 'https://jsonplaceholder.typicode.com'
+        BASE_URL_XML = 'https://jsonplaceholder.typicode.com'
+        CONNECTION_TIMEOUT = '5000'
+        READ_TIMEOUT = '10000'
     }
 
     stages {
@@ -198,12 +214,8 @@ pipeline {
 
             environment{
                 ENV = 'dev'
-                BASE_URL_JSON = 'https://jsonplaceholder.typicode.com'
-                BASE_URL_XML = 'https://jsonplaceholder.typicode.com'
-                LOG_REQUESTS = 'false'
-                LOG_RESPONSES = 'false'
-                CONNECTION_TIMEOUT = '5000'
-                READ_TIMEOUT = '10000'
+                LOG_REQUESTS = "${params.LOG_REQUESTS}"
+                LOG_RESPONSES = "${params.LOG_RESPONSES}"
             }
 
             steps {
@@ -219,12 +231,8 @@ pipeline {
         stage('QA') {
             environment{
                 ENV = 'qa'
-                BASE_URL_JSON = 'https://jsonplaceholder.typicode.com'
-                BASE_URL_XML = 'https://jsonplaceholder.typicode.com'
-                LOG_REQUESTS = 'false'
-                LOG_RESPONSES = 'false'
-                CONNECTION_TIMEOUT = '5000'
-                READ_TIMEOUT = '10000'
+                LOG_REQUESTS = "${params.LOG_REQUESTS}"
+                LOG_RESPONSES = "${params.LOG_RESPONSES}"
             }
             steps {
                 script {
@@ -239,12 +247,8 @@ pipeline {
         stage('STAGING') {
             environment{
                 ENV = 'staging'
-                BASE_URL_JSON = 'https://jsonplaceholder.typicode.com'
-                BASE_URL_XML = 'https://jsonplaceholder.typicode.com'
-                LOG_REQUESTS = 'false'
-                LOG_RESPONSES = 'false'
-                CONNECTION_TIMEOUT = '5000'
-                READ_TIMEOUT = '10000'
+                LOG_REQUESTS = "${params.LOG_REQUESTS}"
+                LOG_RESPONSES = "${params.LOG_RESPONSES}"
             }
             steps {
                 script {
@@ -259,12 +263,12 @@ pipeline {
         stage('Production Approval') {
            when {
                     expression {
-                    params.DEPLOY_TO_PROD
+                        params.DEPLOY_TO_PROD
                  }
             }
             steps {
                     timeout(time: 24, unit: 'HOURS') {
-                    input message: 'Approve production deployment?'
+                    input message: 'Deploy ${env.JOB_NAME} build ${env.BUILD_NUMBER} to production?'
                 }
             }
         }
@@ -272,17 +276,13 @@ pipeline {
         stage('PROD') {
             when {
                     expression {
-                    params.DEPLOY_TO_PROD
+                        params.DEPLOY_TO_PROD
                  }
             }
             environment{
                 ENV = 'prod'
-                BASE_URL_JSON = 'https://jsonplaceholder.typicode.com'
-                BASE_URL_XML = 'https://jsonplaceholder.typicode.com'
                 LOG_REQUESTS = 'false'
                 LOG_RESPONSES = 'false'
-                CONNECTION_TIMEOUT = '5000'
-                READ_TIMEOUT = '10000'
             }
             steps {
                 script {
