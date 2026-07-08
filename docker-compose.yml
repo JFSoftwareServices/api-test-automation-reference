@@ -434,7 +434,6 @@ networks:
     driver: bridge
 
 volumes:
-  jenkins-home:
   maven-cache:
 
 services:
@@ -455,7 +454,7 @@ services:
       - "50000:50000"
 
     volumes:
-      - jenkins-home:/var/jenkins_home
+      - /var/jenkins_home:/var/jenkins_home
       - /var/run/docker.sock:/var/run/docker.sock
       - maven-cache:/root/.m2
 
@@ -495,6 +494,7 @@ services:
 
     volumes:
       - maven-cache:/root/.m2
+      - ${WORKSPACE}/target:/app/target
 
     networks:
       - framework-net
@@ -523,6 +523,7 @@ services:
           -Dbase.url.json="$BASE_URL_JSON" \
           -Dbase.url.xml="$BASE_URL_XML" \
           -Denv="$ENV"
+
   # ════════════════════════════════════════════════════════════════════════════
   # QA Test Runner
   # ════════════════════════════════════════════════════════════════════════════
@@ -546,6 +547,7 @@ services:
 
     volumes:
       - maven-cache:/root/.m2
+      - ${WORKSPACE}/target:/app/target
 
     networks:
       - framework-net
@@ -598,6 +600,7 @@ services:
 
     volumes:
       - maven-cache:/root/.m2
+      - ${WORKSPACE}/target:/app/target
 
     networks:
       - framework-net
@@ -650,6 +653,7 @@ services:
 
     volumes:
       - maven-cache:/root/.m2
+      - ${WORKSPACE}/target:/app/target
 
     networks:
       - framework-net
