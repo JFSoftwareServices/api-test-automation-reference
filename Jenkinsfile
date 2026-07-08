@@ -192,7 +192,7 @@ pipeline {
         }
 
         // ─────────────────────────────────────────────
-        // DEV (always runs)
+        // DEV
         // ─────────────────────────────────────────────
         stage('DEV') {
 
@@ -214,7 +214,7 @@ pipeline {
         }
 
         // ─────────────────────────────────────────────
-        // QA (main only)
+        // QA
         // ─────────────────────────────────────────────
         stage('QA') {
             environment{
@@ -226,9 +226,6 @@ pipeline {
                 CONNECTION_TIMEOUT = '5000'
                 READ_TIMEOUT = '10000'
             }
-            when {
-                expression { env.BRANCH_NAME == 'main' }
-            }
             steps {
                 script {
                     runEnv('qa')
@@ -237,10 +234,9 @@ pipeline {
         }
 
         // ─────────────────────────────────────────────
-        // STAGING (main only)
+        // STAGING
         // ─────────────────────────────────────────────
         stage('STAGING') {
-
             environment{
                 ENV = 'staging'
                 BASE_URL_JSON = 'https://jsonplaceholder.typicode.com'
@@ -250,9 +246,6 @@ pipeline {
                 CONNECTION_TIMEOUT = '5000'
                 READ_TIMEOUT = '10000'
             }
-            when {
-                expression { env.BRANCH_NAME == 'main' }
-            }
             steps {
                 script {
                     runEnv('staging')
@@ -261,7 +254,7 @@ pipeline {
         }
 
         // ─────────────────────────────────────────────
-        // PRODUCTION GATE (main only)
+        // PRODUCTION GATE
         // ─────────────────────────────────────────────
         stage('Production Approval') {
             environment{
@@ -272,9 +265,6 @@ pipeline {
                 LOG_RESPONSES = 'false'
                 CONNECTION_TIMEOUT = '5000'
                 READ_TIMEOUT = '10000'
-            }
-            when {
-                expression { env.BRANCH_NAME == 'main' && !params.SKIP_PROD }
             }
             steps {
                 timeout(time: 24, unit: 'HOURS') {
@@ -292,9 +282,6 @@ pipeline {
                 LOG_RESPONSES = 'false'
                 CONNECTION_TIMEOUT = '5000'
                 READ_TIMEOUT = '10000'
-            }
-            when {
-                expression { env.BRANCH_NAME == 'main' && !params.SKIP_PROD }
             }
             steps {
                 script {
