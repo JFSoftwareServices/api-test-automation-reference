@@ -314,19 +314,7 @@ pipeline {
             }
         }
     }
-
-    // ─────────────────────────────────────────────
-    // CLEANUP TEST CONTAINERS(always runs)
-    // ─────────────────────────────────────────────
-    post {
-        always {
-            sh """
-                ${COMPOSE} rm -fsv tests-dev tests-qa tests-staging tests-prod || true
-            """
-        }
-    }
 }
-
 
 // ═══════════════════════════════════════════════════════════════════════════
 // ENV EXECUTION FUNCTION
@@ -355,11 +343,12 @@ def runEnv(String env) {
     '''
 
     sh """
+        echo "Starting ${env} tests..."
+
         SUITE=${params.SUITE} \
         ${COMPOSE} \
             --profile ${env} \
-            up \
-            --abort-on-container-exit \
-            --exit-code-from tests-${env}
+            run --rm \
+            tests-${env}
     """
 }
