@@ -160,9 +160,9 @@ pipeline {
       )
 
       booleanParam(
-        name: 'SKIP_PROD',
+        name: 'DEPLOY_TO_PROD',
         defaultValue: false,
-        description: 'Skip production stage'
+        description: 'Deploy to production after approval'
       )
     }
 
@@ -257,23 +257,24 @@ pipeline {
         // PRODUCTION GATE
         // ─────────────────────────────────────────────
         stage('Production Approval') {
-            environment{
-                ENV = 'prod'
-                BASE_URL_JSON = 'https://jsonplaceholder.typicode.com'
-                BASE_URL_XML = 'https://jsonplaceholder.typicode.com'
-                LOG_REQUESTS = 'false'
-                LOG_RESPONSES = 'false'
-                CONNECTION_TIMEOUT = '5000'
-                READ_TIMEOUT = '10000'
+           when {
+                    expression {
+                    params.DEPLOY_TO_PROD
+                 }
             }
             steps {
-                timeout(time: 24, unit: 'HOURS') {
-                input message: 'Approve production deployment?'
+                    timeout(time: 24, unit: 'HOURS') {
+                    input message: 'Approve production deployment?'
                 }
             }
         }
 
         stage('PROD') {
+            when {
+                    expression {
+                    params.DEPLOY_TO_PROD
+                 }
+            }
             environment{
                 ENV = 'prod'
                 BASE_URL_JSON = 'https://jsonplaceholder.typicode.com'
